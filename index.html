@@ -138,16 +138,16 @@
       <nav id="product-breadcrumb" class="breadcrumb"></nav> <!--https://getbootstrap.com/docs/4.0/components/breadcrumb/-->
 
       <div class="product-page">
-
+        <!--populate product images in js-->
         <div class="product-images">
           <img id="main-product-img" class="main-img">
           <div id="thumb-container" class="thumb-grid"></div>
         </div>
-
+        <!--populate product info in js-->
         <div id="product-info" class="product-info"></div>
 
       </div>
-
+      <!--populate related products in js-->
       <h2>Related Products</h2>
       <div id="related-products" class="product-grid"></div>
 
@@ -172,7 +172,7 @@
 
           <div id="shipping-box">
             <h3>Shipping</h3>
-
+            <!-- shipping method and destination-->
             <label>Method:</label>
             <select id="shipMethod">
               <option value="standard">Standard</option>
@@ -190,6 +190,7 @@
             </select>
           </div>
 
+          <!-- SUMMARY BOX -->
           <div id="summary-box">
             <h3>Summary</h3>
 
@@ -214,17 +215,17 @@
   </main>
 
 
-  <!-- ================= FOOTER ================= -->
+  <!--footer-->
   <footer class="site-footer">
-    <p>MiniShop SPA — Assignment Demo (Student Version)</p>
+    <p>Shoppei - Assignment</p>
   </footer>
 
 
-  <!-- ================= ABOUT DIALOG ================= -->
+  <!-- About dialog/when about is clicked -->
   <dialog id="aboutDialog" class="about-box">
-    <h2>About MiniShop</h2>
+    <h2>About Shoppei</h2>
     <p>This is a COMP 3512 assignment demonstrating an SPA with filtering, product views, and a cart system.</p>
-    <p>Created by Eugene Pardinez</p>
+    <p>Created by Eugene Pardinez</p> 
     <button id="aboutClose">Close</button>
   </dialog>
 

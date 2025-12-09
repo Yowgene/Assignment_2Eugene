@@ -406,11 +406,10 @@ body {
 
 /* Footer */
 .site-footer {
-  background: #333;
-  color: white;
-  text-align: center;
-  padding: 15px;
-  margin-top: 40px;
+ padding: 15px;
+    text-align: center;
+    background: #f0f0f0;
+    border-top: 1px solid #ccc;
 }
 
 .about-box {

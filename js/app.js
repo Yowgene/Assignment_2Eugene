@@ -1,100 +1,114 @@
-// MiniShop SPA - Clean Rewritten Version
-// Works WITHOUT defer (everything runs inside DOMContentLoaded)
-
-// ======================================================================
-// MAIN WRAPPER - Ensures ALL HTML loads before JS runs
-// ======================================================================
+// domcontent loaded event, then main app code then we can put the javascript on header
 document.addEventListener("DOMContentLoaded", () => {
 
-    // --------------------------
-    // CONSTANTS & STORAGE KEYS
-    // --------------------------
+    //API url for products
     const API_URL =
         "https://gist.githubusercontent.com/rconnolly/d37a491b50203d66d043c26f33dbd798/raw/37b5b68c527ddbe824eaed12073d266d5455432a/clothing-compact.json";
 
+    // key names for localstorage -- https://www.w3schools.com/html/html5_webstorage.asp
     const PRODUCTS_KEY = "minishop-products";
     const CART_KEY = "minishop-cart";
 
-    // --------------------------
-    // DOM ELEMENTS
-    // --------------------------
-    const views = document.querySelectorAll(".view");
-    const navLinks = document.querySelectorAll(".nav-link[data-nav]");
-    const logo = document.getElementById("logo");
+    //dom elements to interact with
+    const views = document.querySelectorAll(".view"); // all views
+    const navLinks = document.querySelectorAll(".nav-link[data-nav]"); //nav links
+    const logo = document.getElementById("logo"); // clickable logo
 
     // Home
-    const heroText = document.getElementById("hero-text");
-    const homeFeatured = document.getElementById("home-featured-products");
+    const heroText = document.getElementById("hero-text"); //hero text
+    const homeFeatured = document.getElementById("home-featured-products"); // featured products
 
     // Browse
-    const productList = document.getElementById("product-list");
-    const filterCheckboxes = document.querySelectorAll('input[data-filter]');
-    const clearFiltersBtn = document.getElementById("clearFilters");
-    const sortSelect = document.getElementById("sortProducts");
+    const productList = document.getElementById("product-list"); // product list
+    const filterCheckboxes = document.querySelectorAll('input[data-filter]'); // filter checkboxes, this is with data-filter attribute
+    const clearFiltersBtn = document.getElementById("clearFilters"); // clear filters button
+    const sortSelect = document.getElementById("sortProducts"); // sort select dropdown
 
     // Product view
-    const backToBrowse = document.getElementById("backToBrowse");
-    const breadcrumb = document.getElementById("product-breadcrumb");
-    const mainProductImg = document.getElementById("main-product-img");
-    const thumbContainer = document.getElementById("thumb-container");
-    const productInfo = document.getElementById("product-info");
-    const relatedContainer = document.getElementById("related-products");
+    const backToBrowse = document.getElementById("backToBrowse"); // back to browse button
+    const breadcrumb = document.getElementById("product-breadcrumb"); // breadcrumb
+    const mainProductImg = document.getElementById("main-product-img"); // main product image
+    const thumbContainer = document.getElementById("thumb-container"); // thumbnail container
+    const productInfo = document.getElementById("product-info"); // product info container
+    const relatedContainer = document.getElementById("related-products"); // related products container
 
     // Cart
-    const cartItemsDiv = document.getElementById("cart-items");
-    const shipMethodSelect = document.getElementById("shipMethod");
-    const shipDestinationSelect = document.getElementById("shipDestination");
-    const checkoutBtn = document.getElementById("checkoutBtn");
-    const sumMerchSpan = document.getElementById("sum-merch");
-    const sumShipSpan = document.getElementById("sum-shipping");
-    const sumTaxSpan = document.getElementById("sum-tax");
-    const sumTotalSpan = document.getElementById("sum-total");
+    const cartItemsDiv = document.getElementById("cart-items");// cart items container
+    const shipMethodSelect = document.getElementById("shipMethod"); // shipping method select
+    const shipDestinationSelect = document.getElementById("shipDestination"); // shipping destination select
+    const checkoutBtn = document.getElementById("checkoutBtn"); // checkout button
+    const sumMerchSpan = document.getElementById("sum-merch");// summary merchandise total span
+    const sumShipSpan = document.getElementById("sum-shipping");// summary shipping total span
+    const sumTaxSpan = document.getElementById("sum-tax");//  summary tax total span
+    const sumTotalSpan = document.getElementById("sum-total"); // summary grand total span
 
 
 
-    // --------------------------
-    // DATA
-    // --------------------------
+  //product array and cart array
     let products = [];
-    let cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
+    let cart = JSON.parse(localStorage.getItem(CART_KEY)) || []; // load cart from localstorage or empty array, in the api
 
-    // ======================================================================
-    // INITIALIZATION
-    // ======================================================================
+    
     initApp();
+    //promise
+    function initApp() {
+    loadProducts()
+    .then(() => {
+      updateHomeHero();
+      renderHomeFeatured();
+      renderProducts(getFilteredAndSortedProducts());
+      renderCart();
 
-    async function initApp() {
-        await loadProducts();
-        updateHomeHero();
-        renderHomeFeatured();
-        renderProducts(getFilteredAndSortedProducts());
-        renderCart();
-        setupNavigation();
-        setupHomeButtons();
-        setupBrowseFilters();
-        setupCartEvents();
-        showView("view-home");
-    }
+      showView("view-home");
+      setupNavigation();
+      setupHomeButtons();
+      setupBrowseFilters();
+      setupCartEvents();
+    })
+    .catch(err => {
+      console.error("Error loading products:", err);
+      if (heroText) {
+        heroText.textContent = "Sorry, there was a problem loading products.";
+      }
+    });
+}
 
-    // ======================================================================
-    // LOAD PRODUCTS (LOCALSTORAGE FIRST, THEN API)
-    // ======================================================================
-    async function loadProducts() {
-        const stored = localStorage.getItem(PRODUCTS_KEY);
+    function loadProducts() {
+      return new Promise((resolve, reject) => {
+    const stored = localStorage.getItem(PRODUCTS_KEY);
 
-        if (stored) {
-            try {
-                products = JSON.parse(stored);
-                if (products.length > 0) return;
-            } catch {
-                localStorage.removeItem(PRODUCTS_KEY);
-            }
+    // Load from localStorage first
+    if (stored) {
+      try {
+        products = JSON.parse(stored);
+        if (Array.isArray(products) && products.length > 0) {
+          resolve();
+          return;
         }
-
-        const res = await fetch(API_URL);
-        products = await res.json();
-        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+      } catch (err) {
+        console.warn("Clearing invalid product cache");
+        localStorage.removeItem(PRODUCTS_KEY);
+      }
     }
+
+    // Fetch API with .then()
+    fetch(API_URL)
+      .then(response => {
+        if (!response.ok) {
+          reject("HTTP error: " + response.status);
+          return;
+        }
+        return response.json();
+      })
+      .then(json => {
+        products = json;
+        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+        resolve();
+      })
+      .catch(err => reject(err));
+  });
+}
+
 
     // ======================================================================
     // VIEW MANAGEMENT
@@ -531,5 +545,18 @@ document.addEventListener("DOMContentLoaded", () => {
             .forEach(el => el.classList.toggle("disabled", disable));
     }
 
+    //This will show the about dialog in the html file
+    const aboutBtn = document.getElementById("aboutBtn");
+    const aboutDialog = document.getElementById("aboutDialog");
+    const aboutClose = document.getElementById("aboutClose");
 
-}); // END DOMContentLoaded WRAPPER
+    aboutBtn.addEventListener("click", () => {
+      aboutDialog.showModal();
+    });
+
+    aboutClose.addEventListener("click", () => {
+      aboutDialog.close();
+    });
+
+
+});
