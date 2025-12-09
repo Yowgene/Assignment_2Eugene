@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     
     initApp();
-    //promise
+    //promise based function to load products from api or localstorage
     function initApp() {
     loadProducts()
     .then(() => {
@@ -65,6 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setupBrowseFilters();
       setupCartEvents();
     })
+    //error handling
     .catch(err => {
       console.error("Error loading products:", err);
       if (heroText) {
@@ -72,96 +73,92 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 }
-
+    // Load products from localStorage or fetch from API
     function loadProducts() {
       return new Promise((resolve, reject) => {
-    const stored = localStorage.getItem(PRODUCTS_KEY);
-
-    // Load from localStorage first
-    if (stored) {
-      try {
-        products = JSON.parse(stored);
-        if (Array.isArray(products) && products.length > 0) {
-          resolve();
-          return;
-        }
-      } catch (err) {
-        console.warn("Clearing invalid product cache");
-        localStorage.removeItem(PRODUCTS_KEY);
+        const stored = localStorage.getItem(PRODUCTS_KEY);
+          // Load from localStorage first
+          if (stored) {
+            try {
+              products = JSON.parse(stored);
+              if (Array.isArray(products) && products.length > 0) {
+                resolve();
+                return;
+              }
+            } catch (err) {
+              console.warn("Clearing invalid product cache");
+              localStorage.removeItem(PRODUCTS_KEY);
+            }
+          }
+          // Fetch API with .then()
+          fetch(API_URL)
+            .then(response => { //check for http errors
+              if (!response.ok) {
+                reject("HTTP error: " + response.status); 
+                return; //stop processing
+              }
+              return response.json(); //parse json
+            })
+            .then(json => { //store products and save to localstorage
+              products = json; //assume json is array of products
+              localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products)); //store in localstorage
+              resolve(); //resolve promise
+            })
+            .catch(err => reject(err)); //network or parsing error
+        });
       }
-    }
-
-    // Fetch API with .then()
-    fetch(API_URL)
-      .then(response => {
-        if (!response.ok) {
-          reject("HTTP error: " + response.status);
-          return;
-        }
-        return response.json();
-      })
-      .then(json => {
-        products = json;
-        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
-        resolve();
-      })
-      .catch(err => reject(err));
-  });
-}
 
 
-    // ======================================================================
-    // VIEW MANAGEMENT
-    // ======================================================================
+    //view management function to show/hide views, when nav links clicked, then view will become the active trait
     function showView(viewId) {
-        views.forEach(v => v.classList.remove("active"));
-        document.getElementById(viewId).classList.add("active");
+        views.forEach(v => v.classList.remove("active")); //hide all views
+        document.getElementById(viewId).classList.add("active"); //show target view
 
-        navLinks.forEach(n => n.classList.remove("active"));
-        const key = viewId.split("-")[1];
-        const active = document.querySelector(`.nav-link[data-nav="${key}"]`);
-        if (active) active.classList.add("active");
+        navLinks.forEach(n => n.classList.remove("active")); //deactivate all nav links
+        const key = viewId.split("-")[1]; //extract key from viewId
+        const active = document.querySelector(`.nav-link[data-nav="${key}"]`); //find matching nav link
+        if (active) active.classList.add("active"); //activate matching nav link
     }
 
-    function setupNavigation() {
-        logo.addEventListener("click", () => {
-            showView("view-home");
-            updateHomeHero();
-            renderHomeFeatured();
+    // setup navigation event listeners for logo and nav links
+    function setupNavigation() { //nav setup
+        logo.addEventListener("click", () => { //clickable logo
+            showView("view-home"); //go to home view
+            updateHomeHero(); //will change back to home hero text, or welcome to shoppei
+            renderHomeFeatured(); //render featured products, will show featured products alongside the hero text
         });
 
-        navLinks.forEach(link => {
-            link.addEventListener("click", e => {
-                e.preventDefault();
-                const target = "view-" + link.dataset.nav;
-                showView(target);
-
-                if (link.dataset.nav === "browse") {
-                    renderProducts(getFilteredAndSortedProducts());
-                } else if (link.dataset.nav === "cart") {
-                    renderCart();
+        navLinks.forEach(link => { //nav links
+            link.addEventListener("click", e => { //click event, depending on which link clicked, home, browse 
+                e.preventDefault(); //prevent default link behavior
+                const target = "view-" + link.dataset.nav; //construct target view id
+                showView(target); //show target view
+              
+                if (link.dataset.nav === "browse") { //if browse link clicked, then it will render products
+                    renderProducts(getFilteredAndSortedProducts()); //render products with current filters/sorting
+                } else if (link.dataset.nav === "cart") { //if cart link clicked, then it will render cart
+                    renderCart(); //render cart contents
                 }
             });
         });
 
-        backToBrowse.addEventListener("click", () => {
-            showView("view-browse");
-            renderProducts(getFilteredAndSortedProducts());
+        backToBrowse.addEventListener("click", () => { //back to browse button on product view
+            showView("view-browse"); //show browse view
+            renderProducts(getFilteredAndSortedProducts()); //render products with current filters/sorting
         });
     }
 
-    // ======================================================================
-    // HOME VIEW
-    // ======================================================================
+    //this is for hero view on home page or banner
     function updateHomeHero() {
-        const total = cart.reduce((s, i) => s + i.qty, 0);
-        heroText.textContent =
-            `Explore products, add to cart, and checkout. Your cart has ${total} item(s).`;
+        const total = cart.reduce((s, i) => s + i.qty, 0); //calculate total items in cart
+        heroText.textContent = // update hero text
+            `Explore products, add to cart, and checkout. Your cart has ${total} item(s).`; //dynamic text showing number of items in cart
     }
 
+    // render featured products on home page
     function renderHomeFeatured() {
-        const featured = products.slice(0, 3);
-
+        const featured = products.slice(0, 3); //take first 3 products as featured
+        //generate HTML for featured products, https://www.w3schools.com/jsref/prop_html_innerhtml.asp .map added for each product
         homeFeatured.innerHTML = featured.map(p => `
             <div class="product-card" data-id="${p.id}">
                 <div class="rect-img"></div>
@@ -171,88 +168,88 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
         `).join("");
 
-        homeFeatured.querySelectorAll(".view-product-btn").forEach(btn => {
-            btn.addEventListener("click", e => {
-                const id = e.target.closest(".product-card").dataset.id;
-                showProduct(id);
+        //add event listeners to view buttons
+        homeFeatured.querySelectorAll(".view-product-btn").forEach(btn => { //select all view product buttons
+            btn.addEventListener("click", e => { //click event
+                const id = e.target.closest(".product-card").dataset.id; //get product id from closest product card
+                showProduct(id); //show product detail view
             });
         });
     }
 
+    //setup home category buttons to filter
     function setupHomeButtons() {
-        document.querySelectorAll(".home-category-btn").forEach(btn => {
-            btn.addEventListener("click", () => {
-                const gender = btn.dataset.filterGender;
-                showView("view-browse");
+        document.querySelectorAll(".home-category-btn").forEach(btn => { //select all home category buttons
+            btn.addEventListener("click", () => { //click event
+                const gender = btn.dataset.filterGender; //get gender from button dataset
+                showView("view-browse"); //show browse view
 
-                filterCheckboxes.forEach(cb => cb.checked = false);
+                filterCheckboxes.forEach(cb => cb.checked = false); //clear all filters
 
-                if (gender) {
-                    const cb = document.querySelector(`input[data-filter="gender"][value="${gender}"]`);
-                    if (cb) cb.checked = true;
+                if (gender) { //if gender specified, check corresponding checkbox
+                    const cb = document.querySelector(`input[data-filter="gender"][value="${gender}"]`); //select checkbox
+                    if (cb) cb.checked = true; //check checkbox
                 }
 
-                renderProducts(getFilteredAndSortedProducts());
+                renderProducts(getFilteredAndSortedProducts()); //render products with current filters/sorting
             });
         });
     }
 
-    // ======================================================================
-    // BROWSE VIEW
-    // ======================================================================
-    function setupBrowseFilters() {
-        filterCheckboxes.forEach(cb =>
-            cb.addEventListener("change", () =>
-                renderProducts(getFilteredAndSortedProducts())
+    //Browse view filtering and sorting setup
+    function setupBrowseFilters() { //filter and sort setup
+        filterCheckboxes.forEach(cb => //for each filter checkbox
+            cb.addEventListener("change", () => //change event
+                renderProducts(getFilteredAndSortedProducts()) //render products with current filters/sorting
             )
         );
 
-        clearFiltersBtn.addEventListener("click", () => {
-            filterCheckboxes.forEach(cb => cb.checked = false);
-            renderProducts(getFilteredAndSortedProducts());
+        clearFiltersBtn.addEventListener("click", () => { //clear filters button
+            filterCheckboxes.forEach(cb => cb.checked = false); //uncheck all filters
+            renderProducts(getFilteredAndSortedProducts()); //render products with current filters/sorting
         });
 
-        sortSelect.addEventListener("change", () => {
-            renderProducts(getFilteredAndSortedProducts());
+        sortSelect.addEventListener("change", () => { //sort select dropdown
+            renderProducts(getFilteredAndSortedProducts()); //render products with current filters/sorting
         });
     }
 
-    function getFilteredAndSortedProducts() {
-        let list = products.slice();
+    function getFilteredAndSortedProducts() { //get filtered and sorted products
+        let list = products.slice(); //copy full product list
 
-        const genders = checked("gender");
-        const cats = checked("category");
-        const sizes = checked("size");
-        const colors = checked("color");
+        const genders = checked("gender"); //get checked genders
+        const cats = checked("category");//get checked categories
+        const sizes = checked("size"); //get checked sizes
+        const colors = checked("color"); //get checked colors
 
-        list = list.filter(p =>
-            (genders.length === 0 || genders.includes(p.gender)) &&
-            (cats.length === 0 || cats.includes(p.category.toLowerCase())) &&
-            (sizes.length === 0 || p.sizes.some(s => sizes.includes(s))) &&
-            (colors.length === 0 || p.color.some(c => colors.includes(c.name)))
+        list = list.filter(p => //filter products based on checked filters
+            (genders.length === 0 || genders.includes(p.gender)) && //if no
+            (cats.length === 0 || cats.includes(p.category.toLowerCase())) && //if no categories checked or product category is in checked categories
+            (sizes.length === 0 || p.sizes.some(s => sizes.includes(s))) && //if no sizes checked or product has at least one size in checked sizes
+            (colors.length === 0 || p.color.some(c => colors.includes(c.name))) //if no colors checked or product has at least one color in checked colors
         );
 
-        const sortBy = sortSelect.value;
-        list.sort((a, b) => {
-            if (sortBy === "name") return a.name.localeCompare(b.name);
-            if (sortBy === "price") return a.price - b.price;
-            if (sortBy === "category") return a.category.localeCompare(b.category);
+        const sortBy = sortSelect.value; //get selected sort option
+        list.sort((a, b) => { //sort products based on selected option
+            if (sortBy === "name") return a.name.localeCompare(b.name); //alphabetical
+            if (sortBy === "price") return a.price - b.price; //price low to high
+            if (sortBy === "category") return a.category.localeCompare(b.category); //category alphabetical
         });
 
-        return list;
+        return list; //return filtered and sorted list
     }
 
-    function checked(type) {
-        return Array.from(document.querySelectorAll(`input[data-filter="${type}"]:checked`))
-            .map(x => x.value);
+    function checked(type) { //get checked values for a filter type
+        return Array.from(document.querySelectorAll(`input[data-filter="${type}"]:checked`)) //select checked checkboxes
+            .map(x => x.value); //return array of values
     }
 
-    function renderProducts(list) {
-        if (list.length === 0) {
-            productList.innerHTML = "<p>No products match your filters.</p>";
+    function renderProducts(list) { //render product list in browse view
+        if (list.length === 0) { //if no products match filters
+            productList.innerHTML = "<p>No products match your filters.</p>"; //display message
             return;
         }
-
+//generate HTML for product list
         productList.innerHTML = list.map(p => `
             <div class="product-card" data-id="${p.id}">
                 <div class="rect-img"></div>
@@ -265,40 +262,38 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
         `).join("");
 
-        productList.querySelectorAll(".view-product-btn").forEach(btn => {
-            btn.addEventListener("click", e => {
-                const id = e.target.closest(".product-card").dataset.id;
-                showProduct(id);
+        productList.querySelectorAll(".view-product-btn").forEach(btn => { //add event listeners to view buttons
+            btn.addEventListener("click", e => { //click event
+                const id = e.target.closest(".product-card").dataset.id; //get product id from closest product card
+                showProduct(id); //show product detail view
             });
         });
 
-        productList.querySelectorAll(".quick-add-btn").forEach(btn => {
-            btn.addEventListener("click", e => {
-                const id = e.target.closest(".product-card").dataset.id;
-                quickAddToCart(id);
+        productList.querySelectorAll(".quick-add-btn").forEach(btn => { //add event listeners to quick add buttons
+            btn.addEventListener("click", e => { //click event
+                const id = e.target.closest(".product-card").dataset.id; //get product id from closest product card
+                quickAddToCart(id); //quick add product to cart
             });
         });
     }
 
-    // ======================================================================
-    // QUICK ADD
-    // ======================================================================
+    // Quick add product to cart with default options
     function quickAddToCart(id) {
-        const p = products.find(x => x.id == id);
-        if (!p) return;
+        const p = products.find(x => x.id == id); //find product by id
+        if (!p) return; //if product not found, exit
 
-        const defaultSize = p.sizes[0] || "One Size";
-        const defaultColor = p.color[0] || { hex: "#000", name: "Default" };
+        const defaultSize = p.sizes[0] || "One Size"; //default to first size or "One Size"
+        const defaultColor = p.color[0] || { hex: "#000", name: "Default" }; //default to first color or black,
 
-        const existing = cart.find(
-            item => item.id === p.id &&
-                item.size === defaultSize &&
-                item.colorHex === defaultColor.hex
+        const existing = cart.find( //check if product with same options already in cart
+            item => item.id === p.id && //same product id
+                item.size === defaultSize && //same size
+                item.colorHex === defaultColor.hex //same color
         );
 
-        if (existing) existing.qty++;
-        else {
-            cart.push({
+        if (existing) existing.qty++; //if found, increment quantity
+        else { //if not found, add new item to cart
+            cart.push({ //add new item to cart
                 id: p.id,
                 name: p.name,
                 price: p.price,
@@ -309,41 +304,39 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
-        localStorage.setItem(CART_KEY, JSON.stringify(cart));
-        updateHomeHero();
-        renderCart();
+        localStorage.setItem(CART_KEY, JSON.stringify(cart)); //save updated cart to localstorage,stringify cart array
+        updateHomeHero(); //update home hero text
+        renderCart(); //render cart view
     }
 
-    // ======================================================================
-    // PRODUCT VIEW (DETAIL PAGE)
-    // ======================================================================
+    // product detail view
     function showProduct(id) {
-        const p = products.find(x => x.id == id);
-        if (!p) return;
+        const p = products.find(x => x.id == id); //find product by id
+        if (!p) return; //if product not found, exit
 
-        breadcrumb.textContent = `Home > ${p.gender} > ${p.category} > ${p.name}`;
+        breadcrumb.textContent = `Home > ${p.gender} > ${p.category} > ${p.name}`; //update breadcrumb text
+        mainProductImg.src = "photos/images2.jpg";
 
-        mainProductImg.src = "photos/" + p.id + ".jpg";
-
+        //populate thumbnails (using same image for demo)
         thumbContainer.innerHTML = `
-            <img src="photos/${p.id}.jpg">
-            <img src="photos/${p.id}.jpg">
+            <img src="photos/images2.jpg">
+            <img src="photos/images2.jpg">
         `;
-
+      //add click event listeners to thumbnails
         thumbContainer.querySelectorAll("img").forEach(img =>
             img.addEventListener("click", () => {
                 mainProductImg.src = img.src;
             })
         );
-
+        //populate product info
         const sizeHTML = p.sizes.map(s =>
             `<button class="size-btn" data-size="${s}">${s}</button>`
         ).join("");
-
+        //populate color options
         const colorHTML = p.color.map(c =>
             `<span class="color-swatch" data-color-hex="${c.hex}" data-color-name="${c.name}" style="background:${c.hex}"></span>`
         ).join("");
-
+        //set innerHTML of product info container, got from API
         productInfo.innerHTML = `
             <h2>${p.name}</h2>
             <p><strong>Price:</strong> $${p.price.toFixed(2)}</p>
@@ -362,44 +355,44 @@ document.addEventListener("DOMContentLoaded", () => {
             <button id="addToCartBtn" class="add-btn">+ Add to Cart</button>
         `;
 
-        let selectedSize = null;
-        let selectedColorHex = null;
-        let selectedColorName = null;
+        let selectedSize = null; //variables to track selected options
+        let selectedColorHex = null; //selected color hex
+        let selectedColorName = null; //selected color name
 
-        productInfo.querySelectorAll(".size-btn").forEach(btn => {
-            btn.addEventListener("click", () => {
-                productInfo.querySelectorAll(".size-btn").forEach(b => b.classList.remove("selected"));
-                btn.classList.add("selected");
-                selectedSize = btn.dataset.size;
+        productInfo.querySelectorAll(".size-btn").forEach(btn => { //add event listeners to size buttons
+            btn.addEventListener("click", () => { //click event
+                productInfo.querySelectorAll(".size-btn").forEach(b => b.classList.remove("selected")); //deselect all sizes
+                btn.classList.add("selected"); //select clicked size
+                selectedSize = btn.dataset.size; //update selected size
             });
         });
 
-        productInfo.querySelectorAll(".color-swatch").forEach(sw => {
-            sw.addEventListener("click", () => {
-                productInfo.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("selected"));
-                sw.classList.add("selected");
-                selectedColorHex = sw.dataset.colorHex;
-                selectedColorName = sw.dataset.colorName;
+        productInfo.querySelectorAll(".color-swatch").forEach(sw => { //add event listeners to color swatches
+            sw.addEventListener("click", () => { //click event
+                productInfo.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("selected")); //deselect all colors
+                sw.classList.add("selected"); //select clicked color
+                selectedColorHex = sw.dataset.colorHex; //update selected color hex
+                selectedColorName = sw.dataset.colorName; //update selected color name
             });
         });
 
-        productInfo.querySelector("#addToCartBtn").addEventListener("click", () => {
-            const qty = parseInt(document.getElementById("qtyInput").value, 10) || 1;
+        productInfo.querySelector("#addToCartBtn").addEventListener("click", () => { //add event listener to add to cart button
+            const qty = parseInt(document.getElementById("qtyInput").value, 10) || 1; //get quantity input value
 
-            if (!selectedSize || !selectedColorHex) {
-                alert("Select a size and color first.");
+            if (!selectedSize || !selectedColorHex) { //ensure size and color selected
+                alert("Select a size and color first."); //alerts the customer
                 return;
             }
 
-            const existing = cart.find(
-                item =>
-                    item.id === p.id &&
-                    item.size === selectedSize &&
-                    item.colorHex === selectedColorHex
+            const existing = cart.find( //check if product with same options already in cart
+                item => 
+                    item.id === p.id && //same product id 
+                    item.size === selectedSize && //same size
+                    item.colorHex === selectedColorHex //same color
             );
 
-            if (existing) existing.qty += qty;
-            else {
+            if (existing) existing.qty += qty; //if found, increment quantity
+            else { //if not found, add new item to cart
                 cart.push({
                     id: p.id,
                     name: p.name,
@@ -411,30 +404,29 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             }
 
-            localStorage.setItem(CART_KEY, JSON.stringify(cart));
-            updateHomeHero();
-            renderCart();
-            alert(`${p.name} added to cart.`);
+            localStorage.setItem(CART_KEY, JSON.stringify(cart)); //save updated cart to localstorage, stringify cart array
+            updateHomeHero(); //update home hero text
+            renderCart(); //render cart view
+            alert(`${p.name} added to cart.`); //confirmation alert
         });
 
-        renderRelated(p);
-        showView("view-product");
+        renderRelated(p); //render related products
+        showView("view-product"); //show product detail view
     }
 
-    // ======================================================================
-    // RELATED PRODUCTS
-    // ======================================================================
-    function renderRelated(p) {
-        const related = products
-            .filter(r => r.id !== p.id && r.gender === p.gender && r.category === p.category)
-            .slice(0, 4);
+    //related products
+    function renderRelated(p) { //render related
+        const related = products //find related products
+            .filter(r => r.id !== p.id && r.gender === p.gender && r.category === p.category) //same gender and category, exclude current product
+            .slice(0, 4); //take first 4 related products
 
-        if (related.length === 0) {
-            relatedContainer.innerHTML = "<p>No related items.</p>";
-            return;
+        if (related.length === 0) { //if no related products
+            relatedContainer.innerHTML = "<p>No related items.</p>"; //display message
+            return; 
         }
 
-        relatedContainer.innerHTML = related.map(r => `
+        //generate HTML for related products
+        relatedContainer.innerHTML = related.map(r => ` 
             <div class="product-card" data-id="${r.id}">
                 <div class="rect-img"></div>
                 <h3>${r.name}</h3>
@@ -443,48 +435,47 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
         `).join("");
 
-        relatedContainer.querySelectorAll(".view-product-btn").forEach(btn => {
-            btn.addEventListener("click", e => {
-                const rid = e.target.closest(".product-card").dataset.id;
-                showProduct(rid);
+        relatedContainer.querySelectorAll(".view-product-btn").forEach(btn => { //add event listeners to view buttons
+            btn.addEventListener("click", e => { //click event
+                const rid = e.target.closest(".product-card").dataset.id; //get related product id from closest product card
+                showProduct(rid); //show related product detail view
             });
         });
     }
 
-    // ======================================================================
-    // CART VIEW
-    // ======================================================================
-    function setupCartEvents() {
-        shipMethodSelect.addEventListener("change", () => renderCart());
-        shipDestinationSelect.addEventListener("change", () => renderCart());
+    //cart event setup
+    function setupCartEvents() { //setup cart events
+        shipMethodSelect.addEventListener("change", () => renderCart()); //re-render cart on shipping method change
+        shipDestinationSelect.addEventListener("change", () => renderCart()); //re-render cart on shipping destination change
 
-        checkoutBtn.addEventListener("click", () => {
-            if (!cart.length) return;
-            alert("Checkout complete!");
-            cart = [];
-            localStorage.removeItem(CART_KEY);
-            renderCart();
-            updateHomeHero();
-            showView("view-home");
+        checkoutBtn.addEventListener("click", () => { //checkout button
+            if (!cart.length) return; //if cart empty, exit
+            alert("Checkout complete!"); //confirmation alert
+            cart = []; //clear cart
+            localStorage.removeItem(CART_KEY); //remove cart from localstorage
+            renderCart(); //re-render cart
+            updateHomeHero(); //update home hero text
+            showView("view-home"); //return to home view
         });
     }
 
-    function renderCart() {
-        if (!cart.length) {
-            cartItemsDiv.innerHTML = "<p>Your cart is empty.</p>";
-            disableShipping(true);
-            updateSummary(0, 0, 0);
+    function renderCart() { //render cart contents
+        if (!cart.length) { //if cart empty
+            cartItemsDiv.innerHTML = "<p>Your cart is empty.</p>"; //display message
+            disableShipping(true); //disable shipping options
+            updateSummary(0, 0, 0); //reset summary totals
             return;
         }
 
-        disableShipping(false);
+        disableShipping(false); //enable shipping options
 
-        let merchTotal = 0;
+        let merchTotal = 0; //variable to track merchandise total
 
-        cartItemsDiv.innerHTML = cart.map((item, index) => {
-            const subtotal = item.qty * item.price;
-            merchTotal += subtotal;
+        cartItemsDiv.innerHTML = cart.map((item, index) => { //generate HTML for cart items
+            const subtotal = item.qty * item.price; //calculate item subtotal
+            merchTotal += subtotal; //add to merchandise total
 
+            //return HTML for each cart item
             return `
                 <div class="cart-item">
                     <button class="delete-btn" data-index="${index}">-</button>
@@ -499,63 +490,64 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             `;
         }).join("");
-
+        //add event listeners to delete buttons
         cartItemsDiv.querySelectorAll(".delete-btn").forEach(btn => {
-            btn.addEventListener("click", e => {
-                const i = e.target.dataset.index;
-                cart.splice(i, 1);
-                localStorage.setItem(CART_KEY, JSON.stringify(cart));
-                renderCart();
-                updateHomeHero();
+            btn.addEventListener("click", e => { //click event
+                const i = e.target.dataset.index; //get item index from button dataset
+                cart.splice(i, 1); //remove item from cart
+                localStorage.setItem(CART_KEY, JSON.stringify(cart)); //save updated cart to localstorage
+                renderCart();//render cart view
+                updateHomeHero(); //update home hero text
             });
         });
 
-        calculateTotals(merchTotal);
+        calculateTotals(merchTotal); //calculate and update totals
     }
 
-    function calculateTotals(merchTotal) {
-        const dest = shipDestinationSelect.value;
-        const method = shipMethodSelect.value;
+    function calculateTotals(merchTotal) { //calculate shipping, tax, and update summary
+        const dest = shipDestinationSelect.value; //shipping destination
+        const method = shipMethodSelect.value;//shipping method
 
-        let shipping = 0;
+        let shipping = 0; //variable to track shipping cost
 
-        if (merchTotal <= 500) {
-            const table = {
+        if (merchTotal <= 500) { //free shipping for orders over $500
+            const table = { //shipping cost table
                 canada: { standard: 10, express: 25, priority: 35 },
                 us: { standard: 15, express: 25, priority: 50 },
                 intl: { standard: 20, express: 30, priority: 50 }
             };
-            shipping = table[dest][method];
+            shipping = table[dest][method];//lookup shipping cost
         }
 
-        const tax = dest === "canada" ? merchTotal * 0.05 : 0;
+        const tax = dest === "canada" ? merchTotal * 0.05 : 0; //5% tax for Canada only
 
-        updateSummary(merchTotal, shipping, tax);
+        updateSummary(merchTotal, shipping, tax); //update summary display
     }
 
+    //update summary display
     function updateSummary(merch, shipping, tax) {
-        sumMerchSpan.textContent = "$" + merch.toFixed(2);
-        sumShipSpan.textContent = "$" + shipping.toFixed(2);
-        sumTaxSpan.textContent = "$" + tax.toFixed(2);
-        sumTotalSpan.textContent = "$" + (merch + shipping + tax).toFixed(2);
+        sumMerchSpan.textContent = "$" + merch.toFixed(2);//update merchandise total
+        sumShipSpan.textContent = "$" + shipping.toFixed(2);  //update shipping total
+        sumTaxSpan.textContent = "$" + tax.toFixed(2); //update tax total
+        sumTotalSpan.textContent = "$" + (merch + shipping + tax).toFixed(2); //update grand total
     }
 
-    function disableShipping(disable) {
-        [shipMethodSelect, shipDestinationSelect, checkoutBtn]
-            .forEach(el => el.classList.toggle("disabled", disable));
+    function disableShipping(disable) { //enable/disable shipping options and checkout button
+        [shipMethodSelect, shipDestinationSelect, checkoutBtn] //array of elements to disable/enable
+            .forEach(el => el.classList.toggle("disabled", disable)); //toggle disabled class
     }
 
     //This will show the about dialog in the html file
-    const aboutBtn = document.getElementById("aboutBtn");
-    const aboutDialog = document.getElementById("aboutDialog");
-    const aboutClose = document.getElementById("aboutClose");
+    const aboutBtn = document.getElementById("aboutBtn"); //about button in footer
+    const aboutDialog = document.getElementById("aboutDialog"); //about dialog element
+    const aboutClose = document.getElementById("aboutClose"); //about dialog close button
 
     aboutBtn.addEventListener("click", () => {
-      aboutDialog.showModal();
+      aboutDialog.showModal();//show modal dialog
     });
 
     aboutClose.addEventListener("click", () => {
-      aboutDialog.close();
+      aboutDialog.close(); //close dialog
     });
 
 
