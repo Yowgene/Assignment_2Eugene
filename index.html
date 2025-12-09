@@ -4,56 +4,70 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MiniShop SPA</title>
+
+  <!-- CSS Stylesheet -->
   <link rel="stylesheet" href="css/stylesheet.css">
+
+  <!--javascript -->
+  <script src="js/app.js"></script>
 </head>
 
 <body>
 
-  <!-- HEADER -->
+  <!--header -->
   <header class="site-header">
     <div class="container header-inner">
-      <div class="header-left">
-        <img src="photos/images.jpg" id="logo" alt="MiniShop Logo" class="clickable">
-        <span class="brand-text">MiniShop</span>
 
-        <nav class="main-nav" aria-label="Main navigation">
+      <div class="header-left"> <!-- Logo + Brand -->
+        <img src="photos/images.jpg" id="logo" alt="Shoppei Logo" class="clickable">
+        <span class="brand-text">Shoppei</span>
+
+        <!--Main navigation-->
+        <nav class="main-nav">
           <a href="#" data-nav="home" class="nav-link active">Home</a>
           <a href="#" data-nav="browse" class="nav-link">Browse</a>
           <a href="#" data-nav="cart" class="nav-link">Cart</a>
           <button id="aboutBtn" class="nav-link btn-link">About</button>
         </nav>
       </div>
+
     </div>
   </header>
 
-  <!-- MAIN CONTENT -->
+
+  <!--main container for content-->
   <main class="container main-content">
 
-    <!-- ================= HOME VIEW ================= -->
+    <!-- this is for home or logo(picture) button-->
     <article id="view-home" class="view active">
+
       <section class="hero">
-        <h1>Welcome to MiniShop!</h1>
-        <p id="hero-text">Explore products, add to cart, and checkout. Your cart is saved locally.</p>
+        <h1>Welcome to Shoppei!</h1>
+        <p id="hero-text">Explore products, add to cart, and checkout. Your cart is automatically saved.</p>
       </section>
 
       <section class="home-categories">
         <h2>Shop by Category</h2>
+
+        <!--Categories-->
+        <!--data-filter https://www.w3schools.com/tags/att_data-.asp-->
         <div class="category-grid">
-          <button class="home-category-btn" data-filter-gender="womens">Women's</button>
+          <button class="home-category-btn" data-filter-gender="womens">Women's</button> 
           <button class="home-category-btn" data-filter-gender="mens">Men's</button>
           <button class="home-category-btn" data-nav="browse">All Products</button>
         </div>
       </section>
-
+      <!--this will be populated with featured products-->
       <section class="home-featured">
         <h2>Featured Products</h2>
         <div id="home-featured-products" class="product-grid"></div>
       </section>
+
     </article>
 
-
-    <!-- ================= BROWSE VIEW ================= -->
+    <!-- this is for browse view-->
     <article id="view-browse" class="view">
+
       <h1>Browse Products</h1>
 
       <div class="browse-wrapper">
@@ -61,23 +75,27 @@
         <!-- FILTER PANEL -->
         <aside class="browse-filters">
 
+          <!--gender-->
           <h3>Gender</h3>
           <label><input type="checkbox" data-filter="gender" value="womens"> Women</label>
           <label><input type="checkbox" data-filter="gender" value="mens"> Men</label>
 
+          <!-- category-->
           <h3>Category</h3>
           <label><input type="checkbox" data-filter="category" value="tops"> Tops</label>
           <label><input type="checkbox" data-filter="category" value="dresses"> Dresses</label>
           <label><input type="checkbox" data-filter="category" value="outerwear"> Outerwear</label>
           <label><input type="checkbox" data-filter="category" value="bottoms"> Bottoms</label>
 
+          <!-- added size and color filters -->
           <h3>Size</h3>
           <label><input type="checkbox" data-filter="size" value="XS"> XS</label>
-          <label><input type="checkbox" data-filter="size" value="S"> Small</label>
-          <label><input type="checkbox" data-filter="size" value="M"> Medium</label>
-          <label><input type="checkbox" data-filter="size" value="L"> Large</label>
+          <label><input type="checkbox" data-filter="size" value="S"> S</label>
+          <label><input type="checkbox" data-filter="size" value="M"> M</label>
+          <label><input type="checkbox" data-filter="size" value="L"> L</label>
           <label><input type="checkbox" data-filter="size" value="XL"> XL</label>
 
+          <!-- color -->
           <h3>Colors</h3>
           <label><input type="checkbox" data-filter="color" value="Black"> Black</label>
           <label><input type="checkbox" data-filter="color" value="White"> White</label>
@@ -85,12 +103,14 @@
           <label><input type="checkbox" data-filter="color" value="Blue"> Blue</label>
           <label><input type="checkbox" data-filter="color" value="Multicolor"> Multicolor</label>
 
-          <button id="clearFilters" class="clear-btn">Clear Filters</button>
-
+          <button id="clearFilters" class="clear-btn">Clear Filters</button> <!-- clear filters button -->
         </aside>
 
-        <!-- PRODUCT LIST -->
+
+        <!-- PRODUCT GRID -->
         <section class="browse-main">
+
+          <!-- browse-->
           <div class="browse-top">
             <label>Sort:
               <select id="sortProducts">
@@ -102,29 +122,28 @@
           </div>
 
           <div id="product-list" class="product-grid"></div>
+
         </section>
 
       </div>
+
     </article>
 
 
-    <!-- ================= PRODUCT VIEW ================= -->
+    <!-- this is for more product details-->
     <article id="view-product" class="view">
 
+  
       <button id="backToBrowse" class="back-btn">&larr; Back to Browse</button>
-
-      <!-- breadcrumb -->
-      <nav id="product-breadcrumb" class="breadcrumb"></nav>
+      <nav id="product-breadcrumb" class="breadcrumb"></nav> <!--https://getbootstrap.com/docs/4.0/components/breadcrumb/-->
 
       <div class="product-page">
 
-        <!-- IMAGES -->
         <div class="product-images">
-          <img id="main-product-img" class="main-img" src="" alt="Product image">
+          <img id="main-product-img" class="main-img">
           <div id="thumb-container" class="thumb-grid"></div>
         </div>
 
-        <!-- PRODUCT INFO -->
         <div id="product-info" class="product-info"></div>
 
       </div>
@@ -132,19 +151,17 @@
       <h2>Related Products</h2>
       <div id="related-products" class="product-grid"></div>
 
-      <!-- toast -->
-      <div id="toaster" class="toaster" hidden></div>
-
     </article>
 
 
-    <!-- ================= CART VIEW ================= -->
+    <!-- this is for cart view-->
     <article id="view-cart" class="view">
+
       <h1>Shopping Cart</h1>
 
       <div id="cart-container">
 
-        <!-- ITEMS -->
+        <!-- CART ITEMS -->
         <div id="cart-items-section">
           <h3>Items</h3>
           <div id="cart-items"></div>
@@ -153,11 +170,10 @@
         <!-- SHIPPING + SUMMARY -->
         <div id="cart-summary-wrapper">
 
-          <!-- SHIPPING -->
           <div id="shipping-box">
             <h3>Shipping</h3>
 
-            <label>Method:</label><br>
+            <label>Method:</label>
             <select id="shipMethod">
               <option value="standard">Standard</option>
               <option value="express">Express</option>
@@ -166,7 +182,7 @@
 
             <br><br>
 
-            <label>Destination:</label><br>
+            <label>Destination:</label>
             <select id="shipDestination">
               <option value="canada">Canada</option>
               <option value="us">United States</option>
@@ -174,24 +190,12 @@
             </select>
           </div>
 
-          <!-- SUMMARY -->
           <div id="summary-box">
             <h3>Summary</h3>
 
-            <div class="summary-row">
-              <span>Merchandise</span>
-              <span id="sum-merch">$0.00</span>
-            </div>
-
-            <div class="summary-row">
-              <span>Shipping</span>
-              <span id="sum-shipping">$0.00</span>
-            </div>
-
-            <div class="summary-row">
-              <span>Tax</span>
-              <span id="sum-tax">$0.00</span>
-            </div>
+            <div class="summary-row"><span>Merchandise</span><span id="sum-merch">$0.00</span></div>
+            <div class="summary-row"><span>Shipping</span><span id="sum-shipping">$0.00</span></div>
+            <div class="summary-row"><span>Tax</span><span id="sum-tax">$0.00</span></div>
 
             <div class="summary-row total-row">
               <strong>Total</strong>
@@ -209,34 +213,20 @@
 
   </main>
 
-  <!-- FOOTER -->
+
+  <!-- ================= FOOTER ================= -->
   <footer class="site-footer">
-    <div class="container">
-      <p>MiniShop SPA — Assignment Demo (Student Version)</p>
-    </div>
+    <p>MiniShop SPA — Assignment Demo (Student Version)</p>
   </footer>
 
-  <!-- ABOUT DIALOG -->
+
+  <!-- ================= ABOUT DIALOG ================= -->
   <dialog id="aboutDialog" class="about-box">
-
-    <h2>About This Project</h2>
-
-    <p>
-      This project is a Single-Page Application created for COMP 3512.  
-      It demonstrates view switching, filtering, product browsing, a shopping cart,  
-      and localStorage usage — all written in plain JavaScript.
-    </p>
-
-    <p>
-      Created by: <strong>Your Name</strong><br>
-      GitHub Repo: <a href="#" target="_blank">Add your link here</a>
-    </p>
-
+    <h2>About MiniShop</h2>
+    <p>This is a COMP 3512 assignment demonstrating an SPA with filtering, product views, and a cart system.</p>
+    <p>Created by Eugene Pardinez</p>
     <button id="aboutClose">Close</button>
   </dialog>
-
-  <!-- JS -->
-  <script src="js/app.js"></script>
 
 </body>
 </html>

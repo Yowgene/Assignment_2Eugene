@@ -1,3 +1,5 @@
+/* this stylesheet is made from chatgpt*/
+
 /* Base */
 body {
   font-family: Arial, sans-serif;
@@ -108,20 +110,33 @@ body {
   gap: 20px;
 }
 
-.product-card {
-  border: 1px solid #ddd;
-  padding: 10px;
-  text-align: center;
-  border-radius: 8px;
-  background: #fff;
+/* Make all product images rectangle portrait */
+.product-card img,
+#main-product-img,
+#thumb-container img,
+.home-featured .product-card img,
+#related-products .product-card img {
+  width: 180px;         /* adjust width */
+  height: 260px;        /* adjust height — portrait shape */
+  object-fit: cover;    /* crop instead of stretching */
+  border-radius: 6px;   /* optional nice corners */
+  display: block;
+  margin: 0 auto;
 }
 
-.product-card img {
-  max-width: 100%;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 5px;
+/* Ensure grid items don't collapse */
+.product-card {
+  text-align: center;
+  padding: 10px;
 }
+
+/* Featured and related grids to fit the new image size */
+.product-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
 
 .product-card button {
   margin-top: 10px;
@@ -287,19 +302,6 @@ body {
   background: #555;
 }
 
-/* Toast */
-.toaster {
-  position: fixed;
-  right: 20px;
-  top: 20px;
-  background: #222;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 4px;
-  opacity: 0;
-  transition: opacity 0.4s;
-  z-index: 999;
-}
 
 /* Cart View */
 #cart-container {
@@ -363,13 +365,13 @@ body {
   margin-bottom: 20px;
 }
 
-.summary-row {
+.sumRow {
   display: flex;
   justify-content: space-between;
   margin: 6px 0;
 }
 
-.total-row {
+.totalRow {
   margin-top: 12px;
   border-top: 2px solid #333;
   padding-top: 8px;
@@ -411,37 +413,6 @@ body {
   margin-top: 40px;
 }
 
-/* Responsive tweaks */
-@media (max-width: 800px) {
-  .browse-wrapper {
-    flex-direction: column;
-  }
-
-  .browse-filters {
-    width: 100%;
-  }
-
-  .product-page {
-    flex-direction: column;
-  }
-
-  .product-images,
-  .product-info {
-    width: 100%;
-  }
-
-  #cart-container {
-    flex-direction: column;
-  }
-
-  #cart-items-section,
-  #cart-summary-wrapper {
-    width: 100%;
-  }
-}
-
-/* Simple About dialog */
-
 .about-box {
   width: 420px;
   max-width: 90%;
@@ -472,4 +443,23 @@ body {
 /* Optional dim background */
 .about-box::backdrop {
   background: rgba(0,0,0,0.4);
+}
+
+.card-buttons {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.quick-add-btn {
+  background: #222;
+  color: white;
+  border-radius: 4px;
+  padding: 4px 8px;
+  border: 1px solid #222;
+  cursor: pointer;
+}
+
+.quick-add-btn:hover {
+  background: #444;
 }
